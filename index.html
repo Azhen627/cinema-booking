@@ -676,9 +676,79 @@ function renderQuote(data) {
         <button class="btn-primary" onclick="window.print()">🖨️ 打印 / 导出</button>
         <button class="btn-secondary" onclick="switchTab('tab-payment')">💳 查看付款方式</button>
       </div>
+      <div style="display:flex;gap:10px;margin-top:10px;">
+        <button class="btn-secondary" onclick="copySummary()">📋 复制摘要 → 发微信</button>
+        <button class="btn-secondary" onclick="downloadSummary()">⬇️ 下载需求单</button>
+      </div>
+      </div>
     </div>
   `;
 }
+
+
+// ========= Summary Helper =========
+let _lastSummaryData = null;
+let _lastGrandTotal = 0;
+let _lastDeposit = 0;
+
+function generateSummaryText(data, grandTotal, deposit) {
+  const hall = halls.find(h => h.short === data.hall);
+  const foodMap = {none:'不需要', basic:'爆米花+饮品套餐', buffet:'冷餐自助'};
+  const decoMap = {no:'不需要', simple:'简单布置（签到区、横幅）', full:'全定制主题布置'};
+  const photoMap = {no:'不需要', photo:'活动跟拍', video:'视频录制'};
+  const invoiceMap = {no:'不需要', normal:'增值税普通发票（电子）', special:'增值税专用发票'};
+  const typeMap = {'团建':'🏢 企业团建','发布会':'📢 品牌发布','应援':'⭐ 粉丝应援','生日':'🎂 生日派对','学术':'📚 学术放映','社区':'🏘️ 社区活动','其他':'其他'};
+  const now = new Date();
+  const dateStr = now.toLocaleString('zh-CN');
+  const hallName = hall ? hall.short+'厅·'+hall.name : '未选择';
+  const foodVal = foodMap[data.food] || data.food;
+  const decoVal = decoMap[data.deco] || data.deco;
+  const photoVal = photoMap[data.photo] || data.photo;
+  const invoiceVal = invoiceMap[data.invoice] || data.invoice;
+  const typeVal = typeMap[data.type] || data.type;
+  const wechatVal = data.wechat || '（未提供）';
+  const noteVal = data.note || '（无）';
+  return '🎬 影院包场需求单\n━━━━━━━━━━━━━━━━━━━━\n📅 提交时间：' + dateStr + '\n━━━━━━━━━━━━━━━━━━━━\n\n【客户信息】\n姓名/企业：' + data.name + '\n联系电话：' + data.phone + '\n微信：' + wechatVal + '\n\n【包场需求】\n选择影厅：' + hallName + '\n期望日期：' + data.date + ' ' + (data.time||'') + '\n预估人数：' + data.people + '\n活动性质：' + typeVal + '\n\n【附加服务】\n餐饮：' + foodVal + '\n场地布置：' + decoVal + '\n拍摄服务：' + photoVal + '\n开发票：' + invoiceVal + '\n\n【备注】\n' + noteVal + '\n━━━━━━━━━━━━━━━━━━━━\n💰 含税总计：¥' + grandTotal.toFixed(2) + '\n💳 需付定金：¥' + deposit.toFixed(2) + '\n━━━━━━━━━━━━━━━━━━━━\n请将本需求单转发给影院工作人员，谢谢！';
+}
+
+function copySummary() {
+  if (!_lastSummaryData) { alert('请先提交需求'); return; }
+  const text = generateSummaryText(_lastSummaryData, _lastGrandTotal, _lastDeposit);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      alert('✅ 已复制到剪贴板！\n请粘贴并转发给影院工作人员。');
+    }).catch(function() {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); alert('✅ 已复制到剪贴板！'); }
+  catch(e) { alert('❌ 复制失败，请手动复制'); }
+  document.body.removeChild(ta);
+}
+
+function downloadSummary() {
+  if (!_lastSummaryData) { alert('请先提交需求'); return; }
+  var text = generateSummaryText(_lastSummaryData, _lastGrandTotal, _lastDeposit);
+  var blob = new Blob(['\uFEFF' + text], { type: 'text/plain;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = '包场需求-' + _lastSummaryData.name + '-' + _lastSummaryData.date + '.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 
 // ========= Payment =========
 function selectPay(el) {
