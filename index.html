@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>影院包场服务</title>
+<style>
+  :root {
+    --primary: #1a1a2e;
+    --secondary: #16213e;
+    --accent: #e94560;
+    --accent2: #f5a623;
+    --bg: #0f0f23;
+    --card: #1e1e3a;
+    --text: #eee;
+    --muted: #999;
+    --radius: 12px;
+    --shadow: 0 4px 20px rgba(0,0,0,0.3);
+    --gold: #d4a853;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    padding: 24px 18px 16px;
+    text-align: center;
+    position: relative;
+  }
+  .header h1 { font-size: 22px; letter-spacing: 2px; }
+  .header h1 span { color: var(--accent); }
+  .header p { font-size: 13px; color: var(--muted); margin-top: 4px; letter-spacing: 1px; }
+  .header::after {
+    content: '';
+    position: absolute; bottom: 0; left: 10%; right: 10%;
+    height: 1px; background: linear-gradient(90deg,transparent,var(--gold),transparent);
+  }
+
+  /* Bottom Tabs */
+  .tab-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--card); border-top: 1px solid #333;
+    display: flex; z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom, 8px);
+  }
+  .tab-btn {
+    flex: 1; text-align: center; padding: 8px 4px 6px;
+    font-size: 11px; color: var(--muted); cursor: pointer;
+    border: none; background: none; transition: .2s;
+  }
+  .tab-btn .icon { font-size: 22px; display: block; margin-bottom: 2px; }
+  .tab-btn.active { color: var(--gold); }
+  .tab-btn.active .icon { color: var(--gold); }
+  .tab-content { display: none; padding: 16px; max-width: 800px; margin: 0 auto; }
+  .tab-content.active { display: block; }
+
+  /* Cards */
+  .card {
+    background: var(--card); border-radius: var(--radius);
+    padding: 18px; margin-bottom: 14px; box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 16px; font-weight: 600; margin-bottom: 12px;
+    padding-bottom: 8px; border-bottom: 1px solid #333;
+  }
+  .card-title .badge {
+    display: inline-block; font-size: 11px; padding: 2px 8px;
+    border-radius: 10px; margin-left: 6px; vertical-align: middle;
+  }
+  .badge-gold { background: var(--gold); color: #000; }
+  .badge-red { background: var(--accent); color: #fff; }
+
+  /* Hall Cards */
+  .hall-card {
+    background: var(--card); border-radius: var(--radius);
+    overflow: hidden; margin-bottom: 16px; box-shadow: var(--shadow);
+  }
+  .hall-img {
+    height: 180px; display: flex; align-items: flex-end;
+    padding: 14px; position: relative;
+    background-size: cover; background-position: center;
+  }
+  .hall-img .hall-label {
+    background: rgba(0,0,0,.7); padding: 4px 12px;
+    border-radius: 6px; font-size: 14px; font-weight: 600;
+    border-left: 3px solid var(--gold);
+  }
+  .hall-info { padding: 14px; }
+  .hall-info .row {
+    display: flex; justify-content: space-between;
+    padding: 4px 0; font-size: 13px; border-bottom: 1px solid #222;
+  }
+  .hall-info .row:last-child { border: none; }
+  .hall-info .label { color: var(--muted); }
+  .hall-info .value { color: var(--text); }
+  .hall-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .hall-tags span {
+    font-size: 11px; padding: 2px 10px; border-radius: 10px;
+    background: rgba(233,69,96,.15); color: var(--accent); border: 1px solid rgba(233,69,96,.3);
+  }
+  .select-btn {
+    width: 100%; padding: 10px; margin-top: 10px;
+    background: var(--gold); color: #000; border: none;
+    border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: .2s;
+  }
+  .select-btn:hover { background: #e6b85c; }
+  .select-btn.selected { background: #2a8a5e; color: #fff; }
+
+  /* Form */
+  .form-group { margin-bottom: 14px; }
+  .form-group label {
+    display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px;
+  }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 10px 12px; border-radius: 8px;
+    border: 1px solid #333; background: #151530; color: var(--text);
+    font-size: 14px; outline: none; transition: .2s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: var(--gold); box-shadow: 0 0 0 2px rgba(212,168,83,.15);
+  }
+  .form-group textarea { resize: vertical; min-height: 60px; }
+  .form-group select { appearance: auto; }
+
+  /* Quote */
+  .quote-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .quote-table th, .quote-table td {
+    padding: 8px 10px; text-align: left; border-bottom: 1px solid #333;
+  }
+  .quote-table th { color: var(--gold); font-weight: 500; }
+  .quote-table td:last-child, .quote-table th:last-child { text-align: right; }
+  .quote-total { font-size: 18px; font-weight: 700; color: var(--accent); text-align: right; margin-top: 10px; }
+  .quote-total small { font-size: 12px; color: var(--muted); font-weight: 400; }
+
+  /* Payment */
+  .payment-method {
+    background: #151530; border: 2px solid #333; border-radius: 10px;
+    padding: 12px; text-align: center; cursor: pointer; transition: .2s;
+  }
+  .payment-method.active { border-color: var(--gold); background: rgba(212,168,83,.08); }
+  .payment-method .pm-icon { font-size: 28px; }
+  .payment-method .pm-name { font-size: 12px; margin-top: 4px; }
+  .qr-placeholder {
+    width: 180px; height: 180px; margin: 12px auto;
+    background: linear-gradient(135deg,#1a1a2e,#2a2a4e);
+    border-radius: 12px; display: flex; align-items: center;
+    justify-content: center; border: 2px dashed #444;
+    font-size: 12px; color: var(--muted); text-align: center; padding: 10px;
+  }
+  .bank-info {
+    background: #151530; border-radius: 8px; padding: 12px; font-size: 13px; margin-top: 10px;
+  }
+  .bank-info div { display: flex; justify-content: space-between; padding: 3px 0; }
+  .bank-info .bi-label { color: var(--muted); }
+
+  /* Settlement */
+  .settlement-note {
+    background: rgba(245,166,35,.08); border-left: 3px solid var(--accent2);
+    padding: 10px 14px; border-radius: 4px; font-size: 13px; color: #ddd;
+    margin-bottom: 12px;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    width: 100%; padding: 12px; background: var(--gold); color: #000;
+    border: none; border-radius: 10px; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: .2s;
+  }
+  .btn-primary:hover { background: #e6b85c; }
+  .btn-secondary {
+    width: 100%; padding: 12px; background: transparent; color: var(--gold);
+    border: 1px solid var(--gold); border-radius: 10px; font-size: 15px; font-weight: 500;
+    cursor: pointer; transition: .2s;
+  }
+  .btn-secondary:hover { background: rgba(212,168,83,.08); }
+
+  /* Success Alert */
+  .alert {
+    padding: 14px; border-radius: 8px; margin-bottom: 14px; font-size: 14px;
+  }
+  .alert-success {
+    background: rgba(42,138,94,.15); color: #4ade80; border: 1px solid rgba(42,138,94,.3);
+  }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 24px; }
+  .timeline::before {
+    content: ''; position: absolute; left: 8px; top: 4px; bottom: 4px;
+    width: 2px; background: #333;
+  }
+  .timeline-item { position: relative; padding-bottom: 16px; font-size: 13px; }
+  .timeline-item::before {
+    content: ''; position: absolute; left: -18px; top: 4px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--card); border: 2px solid var(--gold);
+  }
+  .timeline-item.done::before { background: var(--gold); }
+  .timeline-item .tl-time { color: var(--gold); font-size: 11px; font-weight: 500; }
+  .timeline-item .tl-text { color: var(--muted); margin-top: 2px; }
+
+  /* Responsive */
+  @media (min-width: 768px) {
+    .hall-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  }
+  @media (max-width: 380px) {
+    .header h1 { font-size: 18px; }
+    .hall-img { height: 140px; }
+  }
+
+  /* Animations */
+  @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  .tab-content.active { animation: fadeIn .3s ease; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
+
+  @media print {
+    .tab-bar, .header { display: none; }
+    body { padding-bottom: 0; background: #fff; color: #000; }
+    .card { box-shadow: none; border: 1px solid #ddd; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🎬 光影<span>包场</span></h1>
+  <p>电影院包场服务 · 一站式自助预约</p>
+</div>
+
+<!-- ======= TAB: 影厅 ======= -->
+<div id="tab-halls" class="tab-content active">
+  <div class="hall-grid" id="hallGrid"></div>
+  <div class="card" style="margin-top:8px;">
+    <div class="card-title" style="border:none;">📋 包场服务时间线</div>
+    <div class="timeline">
+      <div class="timeline-item done"><div class="tl-time">T - 14 天</div><div class="tl-text">客户咨询，提供影厅资料与报价</div></div>
+      <div class="timeline-item done"><div class="tl-time">T - 7 天</div><div class="tl-text">确认方案，签署协议，支付定金 50%</div></div>
+      <div class="timeline-item"><div class="tl-time">T - 3 天</div><div class="tl-text">确认人数、餐饮、布置细节</div></div>
+      <div class="timeline-item"><div class="tl-time">T 日</div><div class="tl-text">到场活动，结清尾款</div></div>
+      <div class="timeline-item"><div class="tl-time">T + 1~3 天</div><div class="tl-text">开具结算单与发票</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======= TAB: 填需求 ======= -->
+<div id="tab-form" class="tab-content">
+  <div class="card">
+    <div class="card-title">✍️ 填写包场需求</div>
+    <form id="bookingForm">
+      <div class="form-group">
+        <label>您的姓名 / 企业名称 *</label>
+        <input type="text" id="fName" placeholder="例：张三 / XX 科技有限公司" required>
+      </div>
+      <div class="form-group">
+        <label>联系电话 *</label>
+        <input type="tel" id="fPhone" placeholder="手机号" required>
+      </div>
+      <div class="form-group">
+        <label>微信</label>
+        <input type="text" id="fWechat" placeholder="微信号（选填）">
+      </div>
+      <div class="form-group">
+        <label>期望包场日期 *</label>
+        <input type="date" id="fDate" required>
+      </div>
+      <div class="form-group">
+        <label>期望时段</label>
+        <input type="time" id="fTime" value="14:00">
+      </div>
+      <div class="form-group">
+        <label>预估到场人数 *</label>
+        <select id="fPeople" required>
+          <option value="">请选择</option>
+          <option value="10-30">10 - 30 人</option>
+          <option value="30-60">30 - 60 人</option>
+          <option value="60-100">60 - 100 人</option>
+          <option value="100-150">100 - 150 人</option>
+          <option value="150+">150 人以上</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>活动性质</label>
+        <select id="fType">
+          <option value="团建">🏢 企业团建</option>
+          <option value="发布会">📢 品牌发布 / 产品推介</option>
+          <option value="应援">⭐ 粉丝应援</option>
+          <option value="生日">🎂 生日派对</option>
+          <option value="学术">📚 学术放映 / 交流会</option>
+          <option value="社区">🏘️ 社区活动</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>是否需要餐饮配套</label>
+        <select id="fFood">
+          <option value="none">不需要</option>
+          <option value="basic">爆米花 + 饮品套餐</option>
+          <option value="buffet">冷餐自助</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>是否需要场地布置</label>
+        <select id="fDeco">
+          <option value="no">不需要</option>
+          <option value="simple">简单布置（签到区、横幅）</option>
+          <option value="full">全定制主题布置</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>是否需要拍摄服务</label>
+        <select id="fPhoto">
+          <option value="no">不需要</option>
+          <option value="photo">活动跟拍</option>
+          <option value="video">视频录制</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>是否需要开发票</label>
+        <select id="fInvoice">
+          <option value="no">不需要</option>
+          <option value="normal">增值税普通发票（电子）</option>
+          <option value="special">增值税专用发票</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>备注 / 特殊要求</label>
+        <textarea id="fNote" placeholder="如：需要舞台、指定某部影片、特殊时间要求等"></textarea>
+      </div>
+      <button type="submit" class="btn-primary">📩 提交需求，查看报价</button>
+    </form>
+  </div>
+</div>
+
+<!-- ======= TAB: 报价/结算 ======= -->
+<div id="tab-quote" class="tab-content">
+  <div id="quoteContent"></div>
+</div>
+
+<!-- ======= TAB: 付款 ======= -->
+<div id="tab-payment" class="tab-content">
+  <div class="card">
+    <div class="card-title">💳 付款方式</div>
+    <div class="pay-grid" style="display:flex;gap:10px;flex-wrap:wrap;">
+      <div class="payment-method active" onclick="selectPay(this)">
+        <div class="pm-icon">🏦</div>
+        <div class="pm-name">对公转账</div>
+      </div>
+      <div class="payment-method" onclick="selectPay(this)">
+        <div class="pm-icon">💚</div>
+        <div class="pm-name">微信支付</div>
+      </div>
+      <div class="payment-method" onclick="selectPay(this)">
+        <div class="pm-icon">💙</div>
+        <div class="pm-name">支付宝</div>
+      </div>
+      <div class="payment-method" onclick="selectPay(this)">
+        <div class="pm-icon">💳</div>
+        <div class="pm-name">POS 刷卡</div>
+      </div>
+    </div>
+
+    <div id="payDetail">
+      <div class="bank-info">
+        <div><span class="bi-label">开户名</span><span>XX 影院有限公司</span></div>
+        <div><span class="bi-label">开户行</span><span>XX 银行 XX 支行</span></div>
+        <div><span class="bi-label">账号</span><span>6222 0200 1234 5678 901</span></div>
+      </div>
+    </div>
+    <div class="qr-placeholder" id="qrArea">📸 收款二维码<br><span style="font-size:11px;color:#666;">实际使用时替换为二维码图片</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📄 开票信息确认单</div>
+    <div class="form-group"><label>发票类型</label><select id="invoiceType"><option>增值税普通发票（电子）</option><option>增值税专用发票</option></select></div>
+    <div class="form-group"><label>发票抬头</label><input type="text" id="invTitle" placeholder="企业名称"></div>
+    <div class="form-group"><label>税号</label><input type="text" id="invTax" placeholder="统一社会信用代码"></div>
+    <div class="form-group"><label>收票邮箱</label><input type="email" id="invEmail" placeholder="电子发票接收邮箱"></div>
+    <button class="btn-secondary" onclick="alert('开票信息已保存（本地演示功能）')">💾 保存开票信息</button>
+  </div>
+</div>
+
+<!-- Tab Bar -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="tab-halls">
+    <span class="icon">🎥</span>影厅
+  </button>
+  <button class="tab-btn" data-tab="tab-form">
+    <span class="icon">✍️</span>填需求
+  </button>
+  <button class="tab-btn" data-tab="tab-quote">
+    <span class="icon">💰</span>报价单
+  </button>
+  <button class="tab-btn" data-tab="tab-payment">
+    <span class="icon">💳</span>付款
+  </button>
+</div>
+
+<script>
+// ========= Data =========
+const halls = [
+  {
+    name: '全景声巨幕厅',
+    short: 'A',
+    seats: '268 座（含 4 轮椅位）',
+    screen: '18m × 8.5m',
+    sound: 'Dolby Atmos 全景声',
+    feature: '阶梯座椅、最后一排情侣座',
+    scene: '企业年会 / 新品发布 / 大型活动',
+    gradient: 'linear-gradient(135deg, #1a0a2e, #16213e 50%, #0f3460)',
+    icon: '🎬',
+    price: 3800,
+    priceLabel: '¥3,800 / 场',
+    tags: ['全景声', '巨幕', '268座'],
+    basePrice: 3800
+  },
+  {
+    name: 'VIP 尊享厅',
+    short: 'B',
+    seats: '42 座（全真皮电动沙发）',
+    screen: '10m × 5m',
+    sound: '7.1 声道环绕',
+    feature: '可调节躺椅、独立入口、呼叫铃',
+    scene: 'VIP答谢 / 商务沙龙 / 私享放映',
+    gradient: 'linear-gradient(135deg, #2d1b00, #3d2b10, #4d3b20)',
+    icon: '👑',
+    price: 2800,
+    priceLabel: '¥2,800 / 场',
+    tags: ['VIP', '真皮沙发', '42座'],
+    basePrice: 2800
+  },
+  {
+    name: '亲子欢乐厅',
+    short: 'C',
+    seats: '80 座（含 10 组亲子沙发）',
+    screen: '12m × 6m',
+    sound: '5.1 声道',
+    feature: '儿童增高垫、软包地面、地灯',
+    scene: '儿童生日派对 / 亲子观影 / 社区活动',
+    gradient: 'linear-gradient(135deg, #1a3a2a, #2a4a3a, #3a5a4a)',
+    icon: '🎈',
+    price: 1800,
+    priceLabel: '¥1,800 / 场',
+    tags: ['亲子', '80座', '儿童友好'],
+    basePrice: 1800
+  }
+];
+
+const addonPrices = {
+  food: { none: 0, basic: 25, buffet: 68 },
+  deco: { no: 0, simple: 800, full: 2800 },
+  photo: { no: 0, photo: 1200, video: 2500 }
+};
+
+const discountRules = [
+  { min: 150, label: '150 人以上', rate: 0.85 },
+  { min: 100, label: '100-149 人', rate: 0.90 },
+  { min: 50, label: '50-99 人', rate: 0.93 },
+  { min: 0, label: '50 人以下', rate: 1.0 }
+];
+
+let selectedHall = null;
+const STORAGE_KEY = 'cinema_booking_data';
+
+// ========= Init =========
+function init() {
+  renderHalls();
+  setupTabs();
+  setupForm();
+  loadSaved();
+}
+
+function renderHalls() {
+  const grid = document.getElementById('hallGrid');
+  grid.innerHTML = halls.map(h => `
+    <div class="hall-card">
+      <div class="hall-img" style="background:${h.gradient};">
+        <div style="font-size:48px;margin-bottom:auto;">${h.icon}</div>
+        <div class="hall-label">${h.short}厅 · ${h.name}</div>
+      </div>
+      <div class="hall-info">
+        <div class="row"><span class="label">🪑 座位</span><span class="value">${h.seats}</span></div>
+        <div class="row"><span class="label">📐 银幕</span><span class="value">${h.screen}</span></div>
+        <div class="row"><span class="label">🔊 音响</span><span class="value">${h.sound}</span></div>
+        <div class="row"><span class="label">🏷️ 场租</span><span class="value" style="color:var(--gold);font-weight:600;">${h.priceLabel}</span></div>
+        <div class="hall-tags">${h.tags.map(t => `<span>${t}</span>`).join('')}</div>
+        <button class="select-btn ${selectedHall === h.short ? 'selected' : ''}"
+          onclick="selectHall('${h.short}')">
+          ${selectedHall === h.short ? '✓ 已选' : '选择此厅 →'}
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectHall(short) {
+  selectedHall = short;
+  renderHalls();
+  // Switch to form tab
+  switchTab('tab-form');
+}
+
+// ========= Tabs =========
+function setupTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+}
+
+function switchTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelector(`.tab-btn[data-tab="${id}"]`).classList.add('active');
+}
+
+// ========= Form =========
+function setupForm() {
+  document.getElementById('bookingForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!selectedHall) {
+      alert('请先在「影厅」页面选择一个影厅');
+      switchTab('tab-halls');
+      return;
+    }
+    const data = gatherFormData();
+    saveData(data);
+    renderQuote(data);
+    switchTab('tab-quote');
+  });
+}
+
+function gatherFormData() {
+  return {
+    name: document.getElementById('fName').value,
+    phone: document.getElementById('fPhone').value,
+    wechat: document.getElementById('fWechat').value,
+    date: document.getElementById('fDate').value,
+    time: document.getElementById('fTime').value,
+    people: document.getElementById('fPeople').value,
+    type: document.getElementById('fType').value,
+    food: document.getElementById('fFood').value,
+    deco: document.getElementById('fDeco').value,
+    photo: document.getElementById('fPhoto').value,
+    invoice: document.getElementById('fInvoice').value,
+    note: document.getElementById('fNote').value,
+    hall: selectedHall
+  };
+}
+
+function saveData(d) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch(e) {}
+}
+
+function loadSaved() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    Object.keys(d).forEach(k => {
+      const el = document.getElementById('f' + k.charAt(0).toUpperCase() + k.slice(1));
+      if (el) el.value = d[k];
+    });
+    if (d.hall) { selectedHall = d.hall; renderHalls(); }
+  } catch(e) {}
+}
+
+// ========= Quote =========
+function renderQuote(data) {
+  const hall = halls.find(h => h.short === data.hall);
+  if (!hall) return;
+
+  const people = data.people;
+  let group = '50 人以下', rate = 1.0, discountLabel = '';
+  for (const rule of discountRules) {
+    const num = parseInt(people);
+    if (!isNaN(num) && num >= rule.min) {
+      group = rule.label;
+      rate = rule.rate;
+      discountLabel = rule.rate < 1 ? `（${(1-rule.rate)*10}折）` : '';
+      break;
+    }
+  }
+
+  const peopleCount = parseInt(people) || 30;
+  const foodPrice = addonPrices.food[data.food] || 0;
+  const decoPrice = addonPrices.deco[data.deco] || 0;
+  const photoPrice = addonPrices.photo[data.photo] || 0;
+
+  const venueTotal = hall.price;
+  const foodTotal = foodPrice > 0 ? foodPrice * peopleCount : 0;
+  const decoTotal = decoPrice;
+  const photoTotal = photoPrice;
+  const subtotal = venueTotal + foodTotal + decoTotal + photoTotal;
+  const discount = subtotal * (1 - rate);
+  const afterDiscount = subtotal * rate;
+  const tax = afterDiscount * 0.06;
+  const grandTotal = afterDiscount + tax;
+  const deposit = grandTotal * 0.5;
+
+  const container = document.getElementById('quoteContent');
+  container.innerHTML = `
+    <div class="alert alert-success">🎉 需求已提交！以下是您的包场报价单</div>
+
+    <div class="card">
+      <div class="card-title">📋 需求摘要</div>
+      <div style="font-size:13px;line-height:1.8;">
+        <div><span style="color:var(--muted);">客户：</span>${data.name}</div>
+        <div><span style="color:var(--muted);">联系电话：</span>${data.phone}</div>
+        <div><span style="color:var(--muted);">选择影厅：</span>${hall.short}厅 · ${hall.name} <span style="color:var(--gold);">${hall.priceLabel}</span></div>
+        <div><span style="color:var(--muted);">包场日期：</span>${data.date} ${data.time || ''}</div>
+        <div><span style="color:var(--muted);">人数：</span>${data.people}</div>
+        <div><span style="color:var(--muted);">活动性质：</span>${data.type}</div>
+        ${data.note ? `<div><span style="color:var(--muted);">备注：</span>${data.note}</div>` : ''}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">💰 费用明细</div>
+      <table class="quote-table">
+        <tr><th>项目</th><th>单价</th><th>数量</th><th>金额</th></tr>
+        <tr><td>🏛️ 场租费（${hall.name}）</td><td>${hall.priceLabel}</td><td>1 场</td><td>¥${venueTotal.toLocaleString()}</td></tr>
+        ${foodTotal > 0 ? `<tr><td>🍿 餐饮配套</td><td>¥${foodPrice}/人</td><td>${peopleCount} 人</td><td>¥${foodTotal.toLocaleString()}</td></tr>` : ''}
+        ${decoTotal > 0 ? `<tr><td>🎨 场地布置</td><td>—</td><td>1 套</td><td>¥${decoTotal.toLocaleString()}</td></tr>` : ''}
+        ${photoTotal > 0 ? `<tr><td>📸 拍摄服务</td><td>—</td><td>1 项</td><td>¥${photoTotal.toLocaleString()}</td></tr>` : ''}
+        <tr style="border-top:2px solid #444;"><td><strong>税前合计</strong></td><td></td><td></td><td><strong>¥${subtotal.toLocaleString()}</strong></td></tr>
+        ${discount > 0 ? `<tr><td style="color:var(--accent2);">🎉 团体优惠 ${discountLabel}</td><td></td><td></td><td style="color:var(--accent2);">-¥${discount.toLocaleString()}</td></tr>` : ''}
+        ${discount > 0 ? `<tr><td>优惠后小计</td><td></td><td></td><td>¥${afterDiscount.toLocaleString()}</td></tr>` : ''}
+        <tr><td>🧾 增值税（6%）</td><td></td><td></td><td>¥${tax.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+      </table>
+      <div class="quote-total">含税总计：¥${grandTotal.toLocaleString(undefined,{minimumFractionDigits:2})}</div>
+      <div style="text-align:right;font-size:12px;color:var(--muted);margin-top:4px;">
+        需预付定金：<strong style="color:var(--gold);">¥${deposit.toLocaleString(undefined,{minimumFractionDigits:2})}</strong>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📄 结算单</div>
+      <div class="settlement-note">
+        📌 结算单编号：INV-${data.date.replace(/-/g,'')}-${String(Math.floor(Math.random()*10000)).padStart(4,'0')}<br>
+        📌 客户：${data.name} | 影厅：${hall.short}厅 · ${hall.name} | 日期：${data.date}
+      </div>
+      <table class="quote-table">
+        <tr><th>项目</th><th>金额</th></tr>
+        <tr><td>场租费</td><td>¥${venueTotal.toLocaleString()}</td></tr>
+        ${foodTotal > 0 ? `<tr><td>餐饮费</td><td>¥${foodTotal.toLocaleString()}</td></tr>` : ''}
+        ${decoTotal > 0 ? `<tr><td>场地布置费</td><td>¥${decoTotal.toLocaleString()}</td></tr>` : ''}
+        ${photoTotal > 0 ? `<tr><td>拍摄服务费</td><td>¥${photoTotal.toLocaleString()}</td></tr>` : ''}
+        <tr style="border-top:2px solid #444;"><td><strong>税前合计</strong></td><td><strong>¥${subtotal.toLocaleString()}</strong></td></tr>
+        <tr><td>增值税（6%）</td><td>¥${tax.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+        <tr><td style="color:var(--accent);font-weight:600;">含税总计</td><td style="color:var(--accent);font-weight:600;">¥${grandTotal.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+        <tr><td>已付定金（50%）</td><td>-¥${deposit.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+        <tr style="border-top:2px solid var(--gold);"><td style="color:var(--gold);font-weight:700;">应付尾款</td><td style="color:var(--gold);font-weight:700;">¥${(grandTotal-deposit).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📎 下一步</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:10px;">
+        1. 确认报价 → 签署包场协议<br>
+        2. 支付定金 <strong style="color:var(--gold);">¥${deposit.toLocaleString(undefined,{minimumFractionDigits:2})}</strong><br>
+        3. 到店活动 → 结清尾款
+      </p>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-primary" onclick="window.print()">🖨️ 打印 / 导出</button>
+        <button class="btn-secondary" onclick="switchTab('tab-payment')">💳 查看付款方式</button>
+      </div>
+    </div>
+  `;
+}
+
+// ========= Payment =========
+function selectPay(el) {
+  document.querySelectorAll('.payment-method').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  const name = el.querySelector('.pm-name').textContent;
+  const detail = document.getElementById('payDetail');
+  const qr = document.getElementById('qrArea');
+  if (name === '对公转账') {
+    detail.innerHTML = `<div class="bank-info">
+      <div><span class="bi-label">开户名</span><span>XX 影院有限公司</span></div>
+      <div><span class="bi-label">开户行</span><span>XX 银行 XX 支行</span></div>
+      <div><span class="bi-label">账号</span><span>6222 0200 1234 5678 901</span></div>
+      <div style="margin-top:6px;font-size:11px;color:var(--muted);">⏱ 到账时效：1-3 个工作日 · 免手续费</div>
+    </div>`;
+    qr.innerHTML = '📸 对公转账无需二维码<br><span style="font-size:11px;color:#666;">请使用上方账户信息转账</span>';
+  } else if (name === '微信支付') {
+    detail.innerHTML = `<div style="font-size:13px;color:var(--muted);text-align:center;padding:8px;">
+      💚 微信扫码支付 · 即时到账 · 手续费 0.6%
+    </div>`;
+    qr.innerHTML = '💚 微信收款码<br><span style="font-size:11px;color:#666;">替换为实际收款二维码图片</span>';
+  } else if (name === '支付宝') {
+    detail.innerHTML = `<div style="font-size:13px;color:var(--muted);text-align:center;padding:8px;">
+      💙 支付宝扫码支付 · 即时到账 · 手续费 0.6%
+    </div>`;
+    qr.innerHTML = '💙 支付宝收款码<br><span style="font-size:11px;color:#666;">替换为实际收款二维码图片</span>';
+  } else {
+    detail.innerHTML = `<div style="font-size:13px;color:var(--muted);text-align:center;padding:8px;">
+      💳 POS 刷卡 · 即时到账 · 手续费 0.5%-1%<br>
+      <span style="font-size:11px;">请到店后使用 POS 终端刷卡支付</span>
+    </div>`;
+    qr.innerHTML = '💳 POS 刷卡<br><span style="font-size:11px;color:#666;">到店后现场刷卡</span>';
+  }
+}
+
+// ========= Init =========
+init();
+</script>
+</body>
+</html>
