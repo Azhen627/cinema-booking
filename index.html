@@ -457,6 +457,9 @@ const halls = [
   }
 ];
 
+// Backend API URL (configure after deployment)
+const BACKEND_URL = ''; // e.g. 'https://cinema-booking-api.onrender.com'
+
 const addonPrices = {
   food: { none: 0, basic: 25, buffet: 68 },
   deco: { no: 0, simple: 800, full: 2800 },
@@ -537,6 +540,37 @@ function setupForm() {
     const data = gatherFormData();
     saveData(data);
     renderQuote(data);
+    // Submit to backend API
+    if (BACKEND_URL) {
+      const hall = halls.find(h => h.short === data.hall);
+      const payload = {
+        name: data.name,
+        phone: data.phone,
+        wechat: data.wechat,
+        hallShort: data.hall || '',
+        hallName: hall ? hall.name : '',
+        date: data.date,
+        time: data.time,
+        people: data.people,
+        type: data.type,
+        food: data.food,
+        deco: data.deco,
+        photo: data.photo,
+        invoice: data.invoice,
+        note: data.note
+      };
+      fetch(BACKEND_URL + '/api/submissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(r => r.json()).then(res => {
+        if (res.success) {
+          console.log('[Backend] Submission saved #' + res.id);
+        }
+      }).catch(e => {
+        console.log('[Backend] Submission failed (offline?):', e.message);
+      });
+    }
     switchTab('tab-quote');
   });
 }

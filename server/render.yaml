@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: cinema-booking-api
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: ADMIN_PASSWORD
+        value: admin888
+      - key: PORT
+        value: "3020"
+      - key: EMAIL_HOST
+        value: ""
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USER
+        value: ""
+      - key: EMAIL_PASS
+        value: ""
+      - key: ADMIN_EMAIL
+        value: ""
