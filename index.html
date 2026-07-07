@@ -231,6 +231,9 @@
     .card { box-shadow: none; border: 1px solid #ddd; }
   }
 </style>
+
+<!-- Supabase client (optional, for cloud storage) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -459,6 +462,8 @@ const halls = [
 
 // Backend API URL (configure after deployment)
 const BACKEND_URL = ''; // e.g. 'https://cinema-booking-api.onrender.com'
+const SUPABASE_URL = ''; // 填你的 Supabase URL
+const SUPABASE_ANON_KEY = ''; // 填你的 Supabase anon key
 
 const addonPrices = {
   food: { none: 0, basic: 25, buffet: 68 },
@@ -570,6 +575,23 @@ function setupForm() {
       }).catch(e => {
         console.log('[Backend] Submission failed (offline?):', e.message);
       });
+      // Also submit to Supabase if configured
+      if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const hall = halls.find(h => h.short === data.hall);
+        supabase.from('submissions').insert({
+          name: data.name, phone: data.phone, wechat: data.wechat,
+          hall_short: data.hall || '', hall_name: hall ? hall.name : '',
+          date: data.date, time: data.time, people: data.people,
+          type: data.type, food: data.food, deco: data.deco,
+          photo: data.photo, invoice: data.invoice, note: data.note
+        }).then(function(res2) {
+          if (!res2.error) console.log('[Supabase] Submission saved');
+          else console.log('[Supabase] Error:', res2.error.message);
+        }).catch(function(e2) {
+          console.log('[Supabase] Error:', e2.message);
+        });
+      }
     }
     switchTab('tab-quote');
   });
