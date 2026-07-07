@@ -707,6 +707,9 @@ function renderQuote(data) {
   const tax = afterDiscount * 0.06;
   const grandTotal = afterDiscount + tax;
   const deposit = grandTotal * 0.5;
+    _lastSummaryData = data;
+    _lastGrandTotal = grandTotal;
+    _lastDeposit = deposit;
 
   const container = document.getElementById('quoteContent');
   container.innerHTML = `
