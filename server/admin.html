@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>影院包场 - 后台管理</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+    background: #0f0f23; color: #eee; min-height: 100vh;
+  }
+  .header {
+    background: linear-gradient(135deg,#1a1a2e,#16213e);
+    padding: 16px; text-align: center;
+    border-bottom: 1px solid rgba(212,168,83,.3);
+  }
+  .header h1 { font-size: 18px; color: #d4a853; }
+  .header h1 span { color: #e94560; }
+  .header .sub { font-size: 12px; color: #999; margin-top: 4px; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+
+  /* Login */
+  .login-box {
+    max-width: 360px; margin: 80px auto;
+    background: #1e1e3a; border-radius: 12px; padding: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.3);
+  }
+  .login-box h2 { text-align: center; margin-bottom: 16px; font-size: 18px; }
+  .login-box input {
+    width: 100%; padding: 10px; margin-bottom: 12px;
+    border: 1px solid #333; border-radius: 8px;
+    background: #151530; color: #eee; font-size: 14px; outline: none;
+  }
+  .login-box input:focus { border-color: #d4a853; }
+  .login-box button {
+    width: 100%; padding: 10px; background: #d4a853; color: #000;
+    border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .login-box .error { color: #e94560; font-size: 13px; text-align: center; margin-top: 8px; }
+
+  /* Dashboard */
+  .stats { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat-card {
+    flex: 1; min-width: 100px; background: #1e1e3a; border-radius: 8px;
+    padding: 12px; text-align: center;
+  }
+  .stat-card .num { font-size: 24px; font-weight: 700; color: #d4a853; }
+  .stat-card .label { font-size: 12px; color: #999; margin-top: 4px; }
+
+  .toolbar { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .toolbar input, .toolbar select {
+    padding: 8px 10px; border: 1px solid #333; border-radius: 8px;
+    background: #151530; color: #eee; font-size: 13px; outline: none;
+  }
+  .toolbar button {
+    padding: 8px 16px; background: #d4a853; color: #000;
+    border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #222; }
+  th { color: #d4a853; font-weight: 500; background: #1a1a2e; position: sticky; top: 0; }
+  tr:hover { background: rgba(212,168,83,.05); }
+  .status-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 500;
+  }
+  .status-pending { background: rgba(245,166,35,.15); color: #f5a623; }
+  .status-confirmed { background: rgba(42,138,94,.15); color: #4ade80; }
+  .status-completed { background: rgba(59,130,246,.15); color: #60a5fa; }
+  .status-cancelled { background: rgba(233,69,96,.15); color: #e94560; }
+  .action-btn {
+    padding: 4px 10px; border: none; border-radius: 4px;
+    font-size: 12px; cursor: pointer; margin: 1px;
+  }
+  .btn-view { background: rgba(212,168,83,.2); color: #d4a853; }
+  .btn-edit { background: rgba(59,130,246,.2); color: #60a5fa; }
+  .btn-del { background: rgba(233,69,96,.2); color: #e94560; }
+
+  /* Modal */
+  .modal {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,.7); z-index: 1000;
+    justify-content: center; align-items: center; padding: 16px;
+  }
+  .modal.active { display: flex; }
+  .modal-content {
+    background: #1e1e3a; border-radius: 12px; padding: 20px;
+    max-width: 600px; width: 100%; max-height: 80vh; overflow-y: auto;
+  }
+  .modal-content h3 { margin-bottom: 12px; color: #d4a853; }
+  .modal-content .field {
+    display: flex; padding: 6px 0; border-bottom: 1px solid #222;
+    font-size: 13px;
+  }
+  .modal-content .field .label { color: #999; width: 100px; flex-shrink: 0; }
+  .modal-content .field .value { color: #eee; flex: 1; }
+  .modal-content select, .modal-content textarea {
+    width: 100%; padding: 8px; margin: 4px 0 8px;
+    border: 1px solid #333; border-radius: 6px;
+    background: #151530; color: #eee; font-size: 13px; outline: none;
+  }
+  .modal-content .btn-row { display: flex; gap: 8px; margin-top: 12px; }
+  .modal-content .btn-row button { flex: 1; padding: 8px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: 600; }
+  .modal-content .btn-save { background: #d4a853; color: #000; border: none; }
+  .modal-content .btn-close { background: transparent; color: #999; border: 1px solid #333; }
+
+  @media (max-width: 600px) {
+    table { font-size: 11px; }
+    th, td { padding: 6px 4px; }
+    .stat-card .num { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🎬 光影<span>包场</span></h1>
+  <div class="sub">后台管理 · 客户需求查看 & 处理</div>
+</div>
+
+<div class="container" id="app">
+  <!-- Login -->
+  <div class="login-box" id="loginBox">
+    <h2>🔐 管理员登录</h2>
+    <input type="password" id="pwInput" placeholder="请输入管理员密码" onkeydown="if(event.key==='Enter')login()">
+    <button onclick="login()">登录</button>
+    <div class="error" id="loginError"></div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" style="display:none;">
+    <div class="stats" id="stats"></div>
+    <div class="toolbar">
+      <input type="text" id="searchInput" placeholder="搜索姓名/电话..." oninput="renderTable()">
+      <select id="filterStatus" onchange="renderTable()">
+        <option value="all">全部状态</option>
+        <option value="pending">待处理</option>
+        <option value="confirmed">已确认</option>
+        <option value="completed">已完成</option>
+        <option value="cancelled">已取消</option>
+      </select>
+      <button onclick="logout()">退出</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead><tr>
+          <th>ID</th><th>客户</th><th>电话</th><th>影厅</th><th>日期</th><th>人数</th><th>金额</th><th>状态</th><th>操作</th>
+        </tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <p id="emptyMsg" style="text-align:center;color:#666;padding:40px;display:none;">暂无数据</p>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal" id="detailModal">
+  <div class="modal-content">
+    <h3 id="modalTitle">📋 需求详情</h3>
+    <div id="modalFields"></div>
+    <div class="form-group">
+      <label style="font-size:13px;color:#999;">状态</label>
+      <select id="editStatus">
+        <option value="pending">待处理</option>
+        <option value="confirmed">已确认</option>
+        <option value="completed">已完成</option>
+        <option value="cancelled">已取消</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label style="font-size:13px;color:#999;">管理员备注</label>
+      <textarea id="editNote" rows="3" placeholder="输入内部备注..."></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn-save" onclick="saveEdit()">💾 保存修改</button>
+      <button class="btn-close" onclick="closeModal()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '';  // Same origin, or set to https://your-backend.onrender.com
+let token = localStorage.getItem('admin_token') || '';
+let submissions = [];
+
+function login() {
+  const pw = document.getElementById('pwInput').value;
+  // Test login by making a request
+  fetch(API + '/api/admin/submissions', { headers: { 'x-admin-token': pw } })
+    .then(r => {
+      if (r.status === 401) throw new Error('密码错误');
+      token = pw;
+      localStorage.setItem('admin_token', pw);
+      document.getElementById('loginBox').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      document.getElementById('loginError').textContent = '';
+      loadData();
+    })
+    .catch(e => {
+      document.getElementById('loginError').textContent = e.message || '登录失败';
+    });
+}
+
+function logout() {
+  token = '';
+  localStorage.removeItem('admin_token');
+  document.getElementById('loginBox').style.display = 'block';
+  document.getElementById('dashboard').style.display = 'none';
+}
+
+function loadData() {
+  fetch(API + '/api/admin/submissions', { headers: { 'x-admin-token': token } })
+    .then(r => r.json())
+    .then(data => {
+      submissions = data;
+      renderStats();
+      renderTable();
+    });
+}
+
+function renderStats() {
+  const total = submissions.length;
+  const pending = submissions.filter(s => s.status === 'pending').length;
+  const confirmed = submissions.filter(s => s.status === 'confirmed').length;
+  const completed = submissions.filter(s => s.status === 'completed').length;
+  document.getElementById('stats').innerHTML = `
+    <div class="stat-card"><div class="num">${total}</div><div class="label">总需求</div></div>
+    <div class="stat-card"><div class="num">${pending}</div><div class="label">待处理</div></div>
+    <div class="stat-card"><div class="num">${confirmed}</div><div class="label">已确认</div></div>
+    <div class="stat-card"><div class="num">${completed}</div><div class="label">已完成</div></div>
+  `;
+}
+
+function renderTable() {
+  const search = document.getElementById('searchInput').value.trim().toLowerCase();
+  const filter = document.getElementById('filterStatus').value;
+  let filtered = submissions.filter(s => {
+    if (filter !== 'all' && s.status !== filter) return false;
+    if (search && !s.name.toLowerCase().includes(search) && !s.phone.includes(search)) return false;
+    return true;
+  });
+  const tbody = document.getElementById('tableBody');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    document.getElementById('emptyMsg').style.display = 'block';
+    return;
+  }
+  document.getElementById('emptyMsg').style.display = 'none';
+  const statusMap = {pending:'待处理',confirmed:'已确认',completed:'已完成',cancelled:'已取消'};
+  tbody.innerHTML = filtered.map(s => `
+    <tr>
+      <td>${s.id}</td>
+      <td>${s.name}</td>
+      <td>${s.phone}</td>
+      <td>${s.hall_short || '-'}</td>
+      <td>${s.date || '-'}</td>
+      <td>${s.people || '-'}</td>
+      <td>¥${(s.total_price||0).toFixed(0)}</td>
+      <td><span class="status-badge status-${s.status}">${statusMap[s.status]||s.status}</span></td>
+      <td>
+        <button class="action-btn btn-view" onclick="viewDetail(${s.id})">查看</button>
+        <button class="action-btn btn-del" onclick="deleteSub(${s.id})">删除</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+let editingId = null;
+
+function viewDetail(id) {
+  editingId = id;
+  const s = submissions.find(x => x.id === id);
+  if (!s) return;
+  const statusMap = {pending:'待处理',confirmed:'已确认',completed:'已完成',cancelled:'已取消'};
+  document.getElementById('modalTitle').textContent = `📋 需求 #${s.id} - ${s.name}`;
+  document.getElementById('modalFields').innerHTML = `
+    <div class="field"><span class="label">姓名</span><span class="value">${s.name}</span></div>
+    <div class="field"><span class="label">电话</span><span class="value">${s.phone}</span></div>
+    <div class="field"><span class="label">微信</span><span class="value">${s.wechat||'-'}</span></div>
+    <div class="field"><span class="label">影厅</span><span class="value">${s.hall_short||'-'}${s.hall_name?' · '+s.hall_name:''}</span></div>
+    <div class="field"><span class="label">日期</span><span class="value">${s.date||'-'} ${s.time||''}</span></div>
+    <div class="field"><span class="label">人数</span><span class="value">${s.people||'-'}</span></div>
+    <div class="field"><span class="label">活动性质</span><span class="value">${s.type||'-'}</span></div>
+    <div class="field"><span class="label">创建时间</span><span class="value">${s.created_at||'-'}</span></div>
+    <div class="field"><span class="label">金额</span><span class="value">¥${(s.total_price||0).toFixed(2)}</span></div>
+    <div class="field"><span class="label">定金</span><span class="value">¥${(s.deposit||0).toFixed(2)}</span></div>
+    <div class="field"><span class="label">备注</span><span class="value">${s.note||'-'}</span></div>
+  `;
+  document.getElementById('editStatus').value = s.status;
+  document.getElementById('editNote').value = s.admin_note || '';
+  document.getElementById('detailModal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('detailModal').classList.remove('active');
+  editingId = null;
+}
+
+function saveEdit() {
+  if (!editingId) return;
+  const status = document.getElementById('editStatus').value;
+  const admin_note = document.getElementById('editNote').value;
+  fetch(API + '/api/admin/submissions/' + editingId, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+    body: JSON.stringify({ status, admin_note })
+  })
+  .then(r => r.json())
+  .then(() => {
+    loadData();
+    closeModal();
+  });
+}
+
+function deleteSub(id) {
+  if (!confirm('确定删除这条需求吗？')) return;
+  fetch(API + '/api/admin/submissions/' + id, {
+    method: 'DELETE',
+    headers: { 'x-admin-token': token }
+  })
+  .then(r => r.json())
+  .then(() => loadData());
+}
+
+// Auto-login if token exists
+if (token) {
+  fetch(API + '/api/admin/submissions', { headers: { 'x-admin-token': token } })
+    .then(r => {
+      if (r.status === 401) { localStorage.removeItem('admin_token'); return; }
+      document.getElementById('loginBox').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      return r.json();
+    })
+    .then(data => {
+      if (data) { submissions = data; renderStats(); renderTable(); }
+    });
+}
+</script>
+</body>
+</html>
